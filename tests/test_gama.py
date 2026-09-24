@@ -125,3 +125,24 @@ def test_checkpoint_files_dump_screenshot_and_registers(tmp_path):
     ).fetchall()
     assert [c["name"].rsplit(".", 1)[-1] for c in children] == ["json", "png"]
     assert store.db.execute("SELECT gold FROM wizards").fetchone()[0] == 1234
+
+
+def test_filemap_merges_a_block_written_in_pieces(tmp_path):
+    from gama import filemap
+
+    log = tmp_path / "files.jsonl"
+    lines = [
+        {"seq": 1, "op": "write", "file": "SAVE1.GAM", "ok": True, "position": 0x9E8, "done": 0x400, "buffer": 0x328BA},
+        {"seq": 2, "op": "write", "file": "SAVE1.GAM", "ok": True, "position": 0xDE8, "done": 0x1FA0, "buffer": 0x32CBA},
+        {"seq": 3, "op": "write", "file": "SAVE1.GAM", "ok": True, "position": 0x2698, "done": 9600, "buffer": 0x72630},
+        {"seq": 4, "op": "read", "file": "MAPBACK.LBX", "ok": True, "position": 0, "done": 16, "buffer": 0x1000},
+        {"seq": 5, "op": "open", "file": "SAVE1.GAM", "ok": True},
+    ]
+    log.write_text("\n".join(json.dumps(line) for line in lines))
+
+    blocks = filemap.merge(filemap.transfers(log, "SAVE*.GAM", "write"))
+    assert [(b.position, b.length, b.buffer) for b in blocks] == [
+        (0x9E8, 0x400 + 0x1FA0, 0x328BA),
+        (0x2698, 9600, 0x72630),
+    ]
+    assert blocks[0].delta == 0x328BA - 0x9E8

@@ -37,6 +37,18 @@ uv run gama sql "SELECT c.name, ci.population FROM cities ci JOIN checkpoints c 
 uv run gama rebuild
 ```
 
+**Mapping a save file onto memory.** Start DOSBox with
+`--set webserver_file_log=files.jsonl`, save and load the game, then:
+
+```bash
+uv run gama filemap files.jsonl --file 'SAVE*.GAM' --op write
+```
+
+Each row is a block of the save file with the RAM address it was written
+from (blocks written in several calls are joined), which places every
+save block in memory without guessing. The log is evidence too:
+`evi add files.jsonl --collection ...`.
+
 **`gama checkpoint`** is the one call to make at every moment worth
 keeping: it asks the running DOSBox (the fork's API, default
 `http://127.0.0.1:8086`) for all 16 MB of memory, a raw screenshot and

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from evi.vault import Provenance, Vault
 
+from gama import filemap
 from gama.dosbox import DEFAULT_URL, DosboxApi
 from gama.store import Store
 
@@ -35,6 +36,13 @@ def cmd_checkpoint(store: Store, args: argparse.Namespace) -> None:
     shot = "with screenshot" if row["screenshot_evi_item_id"] else "no screenshot"
     status = f"not decoded: {row['layout_error']}" if row["layout_error"] else "decoded"
     print(f"checkpoint {checkpoint_id}  {row['name']}  ({collection}, {shot}, {status})")
+
+
+def cmd_filemap(_store: Store | None, args: argparse.Namespace) -> None:
+    items = filemap.merge(filemap.transfers(Path(args.log), args.file, args.op))
+    print("seq\top\tfile\tfile_offset\tlength\tram_address\tram_minus_offset")
+    for t in items:
+        print(f"{t.seq}\t{t.op}\t{t.file}\t0x{t.position:06X}\t{t.length}\t0x{t.buffer:06X}\t0x{t.delta:X}")
 
 
 def cmd_index(store: Store, args: argparse.Namespace) -> None:
@@ -86,6 +94,12 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--url", default=DEFAULT_URL, help=f"DOSBox API (default {DEFAULT_URL})")
     p.set_defaults(func=cmd_checkpoint)
 
+    p = sub.add_parser("filemap", help="map file offsets to memory from the DOSBox fork's file-call log")
+    p.add_argument("log", help="the JSON Lines file named by webserver_file_log")
+    p.add_argument("--file", default="*", help="file name glob, e.g. 'SAVE*.GAM'")
+    p.add_argument("--op", choices=["read", "write"], help="only reads or only writes")
+    p.set_defaults(func=cmd_filemap, needs_vault=False)
+
     p = sub.add_parser("index", help="decode RAM dumps already in the vault")
     p.add_argument("--collection", help="only this collection")
     p.set_defaults(func=cmd_index)
@@ -98,6 +112,9 @@ def main(argv: list[str] | None = None) -> None:
     p.set_defaults(func=cmd_sql)
 
     args = parser.parse_args(argv)
+    if not getattr(args, "needs_vault", True):
+        args.func(None, args)
+        return
     home = args.home or (Path(os.environ["EVI_HOME"]) if "EVI_HOME" in os.environ else None)
     if home is None:
         sys.exit("gama: say which vault: set EVI_HOME or pass --home")
