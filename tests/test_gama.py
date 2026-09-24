@@ -146,3 +146,14 @@ def test_filemap_merges_a_block_written_in_pieces(tmp_path):
         (0x2698, 9600, 0x72630),
     ]
     assert blocks[0].delta == 0x328BA - 0x9E8
+
+
+def test_hovered_tile_uses_the_view_origin_and_wraps():
+    from gama.cli import hovered_tile
+
+    assert hovered_tile([260, 110], (32, 16)) == (38, 21)   # Konstanz
+    assert hovered_tile([298, 105], (32, 16)) == (39, 20)   # a gold vein
+    assert hovered_tile([176, 149], (32, 16)) == (36, 23)   # the other gold vein
+    assert hovered_tile([10, 30], (58, 0)) == (58, 0)
+    assert hovered_tile([2 * 45, 30], (58, 0)) == (0, 0)     # wraps at x = 60
+    assert hovered_tile([500, 100], (32, 16)) is None       # the side panel

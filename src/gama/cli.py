@@ -45,14 +45,40 @@ def cmd_filemap(_store: Store | None, args: argparse.Namespace) -> None:
         print(f"{t.seq}\t{t.op}\t{t.file}\t0x{t.position:06X}\t{t.length}\t0x{t.buffer:06X}\t0x{t.delta:X}")
 
 
+# The overland map view: 12 x 10 tiles of 20 x 18 pixels from screen (0, 20);
+# INT 33h reports x in 0..639 in MoM's 320-pixel mode. The world wraps at x = 60.
+MAP_TILE_W, MAP_TILE_H, MAP_TOP, MAP_COLS, MAP_ROWS, WORLD_W = 20, 18, 20, 12, 10, 60
+
+
+def hovered_tile(mouse, origin):
+    if not mouse or not origin:
+        return None
+    px, py = mouse[0] // 2, mouse[1]
+    col, row = px // MAP_TILE_W, (py - MAP_TOP) // MAP_TILE_H
+    if py < MAP_TOP or not (0 <= col < MAP_COLS and 0 <= row < MAP_ROWS):
+        return None
+    return ((origin[0] + col) % WORLD_W, origin[1] + row)
+
+
 def cmd_surveyor(_store: Store | None, args: argparse.Namespace) -> None:
     import json
     import re
 
-    print("time\tmouse\ttext")
+    origin = tuple(int(v) for v in args.origin.split(",")) if args.origin else None
+    plane = args.plane
+    print("time\tmouse\ttile\tplane\ttext")
     for line in Path(args.hits).read_text().splitlines():
         hit = json.loads(line)
-        if not hit["signature"].startswith("surveyor-text") or hit.get("bulk"):
+        if hit.get("bulk"):
+            continue
+        if hit["signature"] == "map-view":
+            raw = bytes.fromhex(hit["new"].replace(" ", ""))
+            origin = (int.from_bytes(raw[0:2], "little"), int.from_bytes(raw[2:4], "little"))
+            continue
+        if hit["signature"] == "map-plane":
+            plane = hit["new_value"]
+            continue
+        if not hit["signature"].startswith("surveyor-text"):
             continue
         new = bytes.fromhex(hit["new"].replace(" ", ""))
         old = bytes.fromhex(hit["old"].replace(" ", ""))
@@ -60,7 +86,8 @@ def cmd_surveyor(_store: Store | None, args: argparse.Namespace) -> None:
         texts = [m.group().decode() for m in re.finditer(rb"[ -~]{3,}", new)
                  if new[m.start():m.end()] != old[m.start():m.end()]]
         if texts:
-            print(f"{hit['t'][11:19]}\t{hit.get('mouse')}\t{' | '.join(texts)}")
+            tile = hovered_tile(hit.get("mouse"), origin)
+            print(f"{hit['t'][11:19]}\t{hit.get('mouse')}\t{tile or ''}\t{'' if plane is None else plane}\t{' | '.join(texts)}")
 
 
 def cmd_index(store: Store, args: argparse.Namespace) -> None:
@@ -120,6 +147,8 @@ def main(argv: list[str] | None = None) -> None:
 
     p = sub.add_parser("surveyor", help="list the Surveyor texts and mouse positions from a signature hit log")
     p.add_argument("hits", help="hits.jsonl written by the DOSBox fork")
+    p.add_argument("--origin", help="map view top-left tile 'x,y' until a map-view hit says otherwise")
+    p.add_argument("--plane", type=int, help="plane (0 Arcanus, 1 Myrror) until a map-plane hit says otherwise")
     p.set_defaults(func=cmd_surveyor, needs_vault=False)
 
     p = sub.add_parser("index", help="decode RAM dumps already in the vault")

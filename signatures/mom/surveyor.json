@@ -1,6 +1,34 @@
 [
-  {"name": "surveyor-text", "kind": "watch", "address": "0x35F80", "size": 256, "window": 16,
-   "note": "WIZARDS.EXE's UI text slots, ds+0xD590..0xD68F: the Surveyor panel's lines (special's effect at ds+0xD59A, terrain bonus at ds+0xD5FE, site or special name at ds+0xD662) change as the pointer moves over tiles. Other screens reuse these slots too. The hit's \"mouse\" is where the pointer was."},
-  {"name": "surveyor-text-2", "kind": "watch", "address": "0x36080", "size": 96, "window": 16,
-   "note": "ds+0xD690..0xD6EF: more text slots, e.g. 'Unexplored' at ds+0xD6C6"}
+  {
+    "name": "surveyor-text",
+    "kind": "watch",
+    "address": "0x35F80",
+    "size": 256,
+    "window": 16,
+    "note": "WIZARDS.EXE's UI text slots, ds+0xD590..0xD68F: the Surveyor panel's lines (special's effect at ds+0xD59A, terrain bonus at ds+0xD5FE, site or special name at ds+0xD662) change as the pointer moves over tiles. Other screens reuse these slots too. The hit's \"mouse\" is where the pointer was."
+  },
+  {
+    "name": "surveyor-text-2",
+    "kind": "watch",
+    "address": "0x36080",
+    "size": 96,
+    "window": 16,
+    "note": "ds+0xD690..0xD6EF: more text slots, e.g. 'Unexplored' at ds+0xD6C6"
+  },
+  {
+    "name": "map-view",
+    "kind": "watch",
+    "address": "0x2F9EE",
+    "size": 4,
+    "window": 16,
+    "note": "ds+0x6FFE: the overland map view's top-left tile, u16 x then u16 y (found 2026-09-24 across 5 Surveyor dumps)"
+  },
+  {
+    "name": "map-plane",
+    "kind": "watch",
+    "address": "0x34776",
+    "size": 2,
+    "window": 16,
+    "note": "ds+0xBD86: the plane being viewed, 0 Arcanus, 1 Myrror (1 on both Myrror dumps, 0 on three Arcanus ones)"
+  }
 ]
