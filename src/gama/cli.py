@@ -74,6 +74,8 @@ def cmd_surveyor(_store: Store | None, args: argparse.Namespace) -> None:
         if hit["signature"] == "map-view":
             raw = bytes.fromhex(hit["new"].replace(" ", ""))
             origin = (int.from_bytes(raw[0:2], "little"), int.from_bytes(raw[2:4], "little"))
+            if origin == (0xFFFF, 0xFFFF):
+                origin = None  # the game clears it while off the map (city screen etc.)
             continue
         if hit["signature"] == "map-plane":
             plane = hit["new_value"]

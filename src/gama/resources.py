@@ -189,11 +189,13 @@ def city_resources(dump: bytes, x: int, y: int, plane: int) -> CityResources:
             continue
         tile_food, tile_production = tile_food_and_production(world.terrain(tx, ty, plane))
         game = 1 if world.mineral(tx, ty, plane) & WILD_GAME else 0
-        # An empty site counts another city's tiles at half; a city's own
-        # catchment counts in full. (Unchecked: no readout had shared tiles.)
-        share = 0.5 if city is None and (tx, ty) in claimed else 1
+        shared = (tx, ty) in claimed
+        # A tile another city also works gives half its production, rounded
+        # down per tile, to a city and an empty site alike (checked: Steyr).
+        production += tile_production // 2 if shared else tile_production
+        # Food: an empty site counts it at half (unchecked); a city in full.
+        share = 0.5 if city is None and shared else 1
         food += tile_food * share
-        production += tile_production * share
         wild_game += game * share
 
     notes = {"half_food": food, "wild_game": wild_game, "river": river, "coast": coast}

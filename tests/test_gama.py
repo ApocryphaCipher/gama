@@ -182,3 +182,20 @@ def test_city_resources_for_a_site_and_a_city():
     # Beside the ocean (Myrror is all zeros, i.e. ocean): +10% gold.
     put(dump, layout.TERRAIN + 2 * (2400 + 20 * 60 + 30), (0xA3).to_bytes(2, "little"))
     assert resources.city_resources(bytes(dump), 30, 20, 1).gold == 10
+
+
+def test_shared_tiles_give_half_production_rounded_down_per_tile():
+    from gama import resources
+
+    dump = synthetic_dump()
+    city = layout.CITIES.base
+    put(dump, city + 31, bytes([0xFF] * 36))
+    put(dump, city + layout.CITIES.stride, b"Nearby\0")
+    put(dump, city + layout.CITIES.stride + 15, bytes([13, 20, 0, 1, 1, 1]))
+    put(dump, city + layout.CITIES.stride + 31, bytes([0xFF] * 36))
+    put(dump, layout.TERRAIN, (0xA3).to_bytes(2, "little") * 2400)  # all forest, 3% each
+    put(dump, layout.EXPLORED, bytes([1]) * 2400)
+
+    # 6 of Testburg's 21 tiles are also Nearby's: they give 3 // 2 = 1 each.
+    got = resources.city_resources(bytes(dump), 10, 20, 0)
+    assert (got.max_pop, got.production) == (10, 15 * 3 + 6 * 1)
