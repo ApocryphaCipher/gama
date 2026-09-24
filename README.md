@@ -59,6 +59,9 @@ Freya's fame, research, summoning circle and combat skill) and
 hit is appended to `hits.jsonl` there (git-ignored) with a window of the
 memory around it, and a hit can take a screenshot or pause the game so a
 `gama checkpoint` catches the moment (then `POST /api/v1/dosbox/resume`).
+`surveyor.json` watches the game's UI text slots, so with the Surveyor
+open, each hovered tile logs its panel text with the mouse position;
+`uv run gama surveyor hits.jsonl` lists them.
 The addresses are `WIZARDS.EXE`'s, stable across launches with the same
 DOSBox memory size. **During a battle the game reuses the memory of the
 city table (and others) for combat**, and a save loading rewrites them

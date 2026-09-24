@@ -1,0 +1,6 @@
+[
+  {"name": "surveyor-text", "kind": "watch", "address": "0x35F80", "size": 256, "window": 16,
+   "note": "WIZARDS.EXE's UI text slots, ds+0xD590..0xD68F: the Surveyor panel's lines (special's effect at ds+0xD59A, terrain bonus at ds+0xD5FE, site or special name at ds+0xD662) change as the pointer moves over tiles. Other screens reuse these slots too. The hit's \"mouse\" is where the pointer was."},
+  {"name": "surveyor-text-2", "kind": "watch", "address": "0x36080", "size": 96, "window": 16,
+   "note": "ds+0xD690..0xD6EF: more text slots, e.g. 'Unexplored' at ds+0xD6C6"}
+]

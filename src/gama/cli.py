@@ -45,6 +45,24 @@ def cmd_filemap(_store: Store | None, args: argparse.Namespace) -> None:
         print(f"{t.seq}\t{t.op}\t{t.file}\t0x{t.position:06X}\t{t.length}\t0x{t.buffer:06X}\t0x{t.delta:X}")
 
 
+def cmd_surveyor(_store: Store | None, args: argparse.Namespace) -> None:
+    import json
+    import re
+
+    print("time\tmouse\ttext")
+    for line in Path(args.hits).read_text().splitlines():
+        hit = json.loads(line)
+        if not hit["signature"].startswith("surveyor-text") or hit.get("bulk"):
+            continue
+        new = bytes.fromhex(hit["new"].replace(" ", ""))
+        old = bytes.fromhex(hit["old"].replace(" ", ""))
+        # Keep only the strings that changed: the slots the game just wrote.
+        texts = [m.group().decode() for m in re.finditer(rb"[ -~]{3,}", new)
+                 if new[m.start():m.end()] != old[m.start():m.end()]]
+        if texts:
+            print(f"{hit['t'][11:19]}\t{hit.get('mouse')}\t{' | '.join(texts)}")
+
+
 def cmd_index(store: Store, args: argparse.Namespace) -> None:
     print(f"Decoded {store.index(args.collection)} new dumps")
     cmd_status(store, args)
@@ -99,6 +117,10 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--file", default="*", help="file name glob, e.g. 'SAVE*.GAM'")
     p.add_argument("--op", choices=["read", "write"], help="only reads or only writes")
     p.set_defaults(func=cmd_filemap, needs_vault=False)
+
+    p = sub.add_parser("surveyor", help="list the Surveyor texts and mouse positions from a signature hit log")
+    p.add_argument("hits", help="hits.jsonl written by the DOSBox fork")
+    p.set_defaults(func=cmd_surveyor, needs_vault=False)
 
     p = sub.add_parser("index", help="decode RAM dumps already in the vault")
     p.add_argument("--collection", help="only this collection")
