@@ -60,7 +60,10 @@ hit is appended to `hits.jsonl` there (git-ignored) with a window of the
 memory around it, and a hit can take a screenshot or pause the game so a
 `gama checkpoint` catches the moment (then `POST /api/v1/dosbox/resume`).
 The addresses are `WIZARDS.EXE`'s, stable across launches with the same
-DOSBox memory size.
+DOSBox memory size. **During a battle the game reuses the memory of the
+city table (and others) for combat**, and a save loading rewrites them
+too; such scans log one `"bulk": true` line per table instead of every
+record, which also marks battles starting and ending.
 
 **`gama checkpoint`** is the one call to make at every moment worth
 keeping: it asks the running DOSBox (the fork's API, default
