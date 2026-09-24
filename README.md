@@ -28,12 +28,21 @@ Rules it keeps:
 
 ```bash
 export EVI_HOME=~/repo/mom-evi-vault        # the Evi vault to work in
+uv run gama checkpoint "bought granary" --note "Hamburg city screen"
+                                            # memory + raw screenshot + registers from the running DOSBox
 uv run gama ingest dumps/ --collection mom-live-2026-09-23 \
     --source "DOSBox fork memory API" --license "game data: never publish raw"
 uv run gama index                           # decode dumps already in the vault
 uv run gama sql "SELECT c.name, ci.population FROM cities ci JOIN checkpoints c ON c.id = ci.checkpoint_id WHERE ci.name = 'Hamburg' ORDER BY c.taken_at"
 uv run gama rebuild
 ```
+
+**`gama checkpoint`** is the one call to make at every moment worth
+keeping: it asks the running DOSBox (the fork's API, default
+`http://127.0.0.1:8086`) for all 16 MB of memory, a raw screenshot and
+the CPU registers, files them in the vault as one checkpoint (the
+screenshot and registers attached to the dump), and decodes it. The
+collection defaults to `mom-live-<today>`.
 
 The database is `$EVI_HOME/derived/gama.sqlite`; any SQLite tool (or
 DuckDB) can open it, and `checkpoints.evi_item_id` leads back to each
@@ -46,7 +55,7 @@ One row per record per checkpoint, joined to `checkpoints` by
 
 | Table | Rows | Notes |
 | --- | --- | --- |
-| `checkpoints` | one per decoded dump | Evi item id, dump hash, name, collection, time; `layout_error` says why a dump wasn't decoded |
+| `checkpoints` | one per dump | Evi item ids of the dump and its screenshot, hash, name, note, collection, time; `layout_error` says why a dump wasn't decoded |
 | `wizards` | 5 | gold, mana, fame, power base, skill, research |
 | `cities` | cities with a name | population, size, race, owner, production, `buildings` (JSON list of building ids) |
 | `units` | slots below the unit count | `dead` = 1 for killed units (the game marks them in place with plane `0xff`) |

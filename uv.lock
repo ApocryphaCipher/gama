@@ -14,7 +14,7 @@ wheels = [
 [[package]]
 name = "evi"
 version = "0.1.0"
-source = { git = "https://github.com/ApocryphaCipher/evi#e9c329995b52a4d4f814a62296b8baabf268f118" }
+source = { git = "https://github.com/ApocryphaCipher/evi#320ebaa643a1cf5c734d711be99b4bd06132389c" }
 dependencies = [
     { name = "pypdf" },
     { name = "striprtf" },

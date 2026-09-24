@@ -3,10 +3,12 @@
 import argparse
 import os
 import sys
+from datetime import date
 from pathlib import Path
 
 from evi.vault import Provenance, Vault
 
+from gama.dosbox import DEFAULT_URL, DosboxApi
 from gama.store import Store
 
 
@@ -21,6 +23,18 @@ def cmd_ingest(store: Store, args: argparse.Namespace) -> None:
     new = sum(was_new for _, _, was_new in results)
     print(f"{new} dumps added to the vault, {len(results) - new} already there")
     cmd_status(store, args)
+
+
+def cmd_checkpoint(store: Store, args: argparse.Namespace) -> None:
+    collection = args.collection or f"mom-live-{date.today().isoformat()}"
+    checkpoint_id = store.checkpoint(DosboxApi(args.url), args.label, collection, args.note)
+    row = store.db.execute(
+        "SELECT name, screenshot_evi_item_id, layout_error FROM checkpoints WHERE id = ?",
+        (checkpoint_id,),
+    ).fetchone()
+    shot = "with screenshot" if row["screenshot_evi_item_id"] else "no screenshot"
+    status = f"not decoded: {row['layout_error']}" if row["layout_error"] else "decoded"
+    print(f"checkpoint {checkpoint_id}  {row['name']}  ({collection}, {shot}, {status})")
 
 
 def cmd_index(store: Store, args: argparse.Namespace) -> None:
@@ -64,6 +78,13 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--license", help="what may be done with them")
     p.add_argument("--note")
     p.set_defaults(func=cmd_ingest)
+
+    p = sub.add_parser("checkpoint", help="capture memory, a screenshot and registers from the running DOSBox")
+    p.add_argument("label", help="what this moment is, e.g. 'bought granary'")
+    p.add_argument("--note", help="more about what was on screen")
+    p.add_argument("--collection", help="Evi collection (default mom-live-<today>)")
+    p.add_argument("--url", default=DEFAULT_URL, help=f"DOSBox API (default {DEFAULT_URL})")
+    p.set_defaults(func=cmd_checkpoint)
 
     p = sub.add_parser("index", help="decode RAM dumps already in the vault")
     p.add_argument("--collection", help="only this collection")

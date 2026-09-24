@@ -94,3 +94,34 @@ def test_store_decodes_dumps_from_the_vault(tmp_path):
     assert store.rebuild() == 1
     gold = store.db.execute("SELECT gold FROM wizards WHERE idx = 0").fetchone()[0]
     assert gold == 1234
+
+
+class FakeDosbox:
+    url = "http://fake"
+
+    def __init__(self, dump: bytes):
+        self.dump = dump
+
+    def memory(self) -> bytes:
+        return self.dump
+
+    def cpu_state(self) -> bytes:
+        return b'{"registers": {"ss": 10399}}'
+
+    def screenshot(self, kind: str = "raw") -> bytes:
+        return b"\x89PNG fake"
+
+
+def test_checkpoint_files_dump_screenshot_and_registers(tmp_path):
+    store = Store(Vault(tmp_path / "vault"))
+    checkpoint_id = store.checkpoint(FakeDosbox(bytes(synthetic_dump())), "Bought granary", "live")
+
+    row = store.db.execute("SELECT * FROM checkpoints WHERE id = ?", (checkpoint_id,)).fetchone()
+    assert row["name"].endswith("-bought-granary") and row["note"] == "Bought granary"
+    assert row["layout_error"] is None and row["screenshot_evi_item_id"] is not None
+
+    children = store.vault.catalog.db.execute(
+        "SELECT name FROM items WHERE parent_id = ? ORDER BY name", (row["evi_item_id"],)
+    ).fetchall()
+    assert [c["name"].rsplit(".", 1)[-1] for c in children] == ["json", "png"]
+    assert store.db.execute("SELECT gold FROM wizards").fetchone()[0] == 1234
