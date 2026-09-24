@@ -8,30 +8,36 @@ other tools so far are a DOSBox Staging fork that exposes the running
 machine (memory, screenshots) and Mirror, a Master of Magic save viewer.
 
 Turns RAM dumps of Master of Magic, running in the DOSBox Staging fork
-(`~/repo/c++/dosbox-staging`, branch `webserver-write-guard`), into a
-SQLite dataset you can query.
+(`ApocryphaCipher/dosbox-staging`, branch `webserver-write-guard`), into
+SQLite tables you can query. It is the decoding and data layer between
+the fork, which captures the running machine, and
+[Evi](https://github.com/ApocryphaCipher/evi), which keeps the evidence.
 
 Rules it keeps:
 
-- **Raw evidence is never replaced.** Every dump is stored once,
-  zstd-compressed, named by its SHA-256. The decoded tables are derived:
-  `gama rebuild` re-decodes every stored dump when a decoder improves.
+- **gama stores no evidence.** Dumps go into an Evi vault, where they are
+  kept as originals (shared 4 KB pages) with their provenance. gama reads
+  them from there.
+- **Its tables are derived.** They live in the vault's `derived/` folder
+  (not versioned), and `gama rebuild` recreates them from the vault
+  whenever a decoder improves.
 - **Only checked fields are decoded.** A column is either checked against
   the running game or marked as a guess below.
-- **No game files in git.** The data lives in `GAMA_HOME`
-  (default `~/.mirror/dev/DOSbox/gama`), not in this repo.
 
 ## Use
 
 ```bash
-uv run gama ingest ~/.mirror/dev/DOSbox/ram-dumps-2026-09-23      # a folder of *.bin, or files
-uv run gama ingest dump.bin --name "turn 5 map" --note "after buying a granary"
-uv run gama sql "SELECT c.name, ci.population FROM cities ci JOIN checkpoints c ON c.id = ci.checkpoint_id WHERE ci.name = 'Hamburg'"
+export EVI_HOME=~/repo/mom-evi-vault        # the Evi vault to work in
+uv run gama ingest dumps/ --collection mom-live-2026-09-23 \
+    --source "DOSBox fork memory API" --license "game data: never publish raw"
+uv run gama index                           # decode dumps already in the vault
+uv run gama sql "SELECT c.name, ci.population FROM cities ci JOIN checkpoints c ON c.id = ci.checkpoint_id WHERE ci.name = 'Hamburg' ORDER BY c.taken_at"
 uv run gama rebuild
 ```
 
-The database is `$GAMA_HOME/gama.sqlite`; any SQLite tool (or DuckDB)
-can open it.
+The database is `$EVI_HOME/derived/gama.sqlite`; any SQLite tool (or
+DuckDB) can open it, and `checkpoints.evi_item_id` leads back to each
+dump's item in the Evi catalogue.
 
 ## Tables
 
@@ -40,7 +46,7 @@ One row per record per checkpoint, joined to `checkpoints` by
 
 | Table | Rows | Notes |
 | --- | --- | --- |
-| `checkpoints` | one per stored dump | name, time, dump hash, optional screenshot and note; `layout_error` says why a dump wasn't decoded |
+| `checkpoints` | one per decoded dump | Evi item id, dump hash, name, collection, time; `layout_error` says why a dump wasn't decoded |
 | `wizards` | 5 | gold, mana, fame, power base, skill, research |
 | `cities` | cities with a name | population, size, race, owner, production, `buildings` (JSON list of building ids) |
 | `units` | slots below the unit count | `dead` = 1 for killed units (the game marks them in place with plane `0xff`) |
@@ -55,7 +61,7 @@ checked is recorded in Mirror's `docs/reference/live-ram-map.md`.
 ## Where the tables are
 
 `src/gama/layout.py` holds the RAM addresses. They held across two DOSBox
-launches but aren't guaranteed; a dump that doesn't fit is stored but not
+launches but aren't guaranteed; a dump that doesn't fit is recorded but not
 decoded, with the reason in `checkpoints.layout_error`.
 
 ## Develop
@@ -63,3 +69,7 @@ decoded, with the reason in `checkpoints.layout_error`.
 ```bash
 uv run pytest
 ```
+
+## Licence
+
+MIT. The licence covers gama's code only, never game data or dumps.

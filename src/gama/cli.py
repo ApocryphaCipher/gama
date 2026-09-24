@@ -1,37 +1,45 @@
-"""gama command line: ingest dumps, rebuild tables, run SQL."""
+"""gama command line: add dumps to the Evi vault, decode them, run SQL."""
 
 import argparse
 import os
 import sys
 from pathlib import Path
 
+from evi.vault import Provenance, Vault
+
 from gama.store import Store
-
-DEFAULT_HOME = Path.home() / ".mirror" / "dev" / "DOSbox" / "gama"
-
-
-def _home() -> Path:
-    return Path(os.environ.get("GAMA_HOME", DEFAULT_HOME))
 
 
 def cmd_ingest(store: Store, args: argparse.Namespace) -> None:
     paths = sorted(
-        (p for arg in args.paths for p in (Path(arg).glob("*.bin") if Path(arg).is_dir() else [Path(arg)])),
+        (p for arg in args.paths
+         for p in (Path(arg).glob("*.bin") if Path(arg).is_dir() else [Path(arg)])),
         key=lambda p: p.stat().st_mtime,
     )
-    for path in paths:
-        checkpoint_id, new = store.ingest(path, name=args.name, note=args.note)
-        error = store.db.execute(
-            "SELECT layout_error FROM checkpoints WHERE id = ?", (checkpoint_id,)
-        ).fetchone()[0]
-        status = "added" if new else "already stored"
-        if error:
-            status += f", not decoded: {error}"
-        print(f"{checkpoint_id:4}  {path.name}  ({status})")
+    prov = Provenance(args.collection, args.source, None, args.license, args.note)
+    results = store.ingest(paths, prov)
+    new = sum(was_new for _, _, was_new in results)
+    print(f"{new} dumps added to the vault, {len(results) - new} already there")
+    cmd_status(store, args)
+
+
+def cmd_index(store: Store, args: argparse.Namespace) -> None:
+    print(f"Decoded {store.index(args.collection)} new dumps")
+    cmd_status(store, args)
 
 
 def cmd_rebuild(store: Store, _args: argparse.Namespace) -> None:
     print(f"Decoded {store.rebuild()} checkpoints again")
+
+
+def cmd_status(store: Store, _args: argparse.Namespace) -> None:
+    rows = store.db.execute(
+        "SELECT collection, count(*) AS n, sum(layout_error IS NOT NULL) AS failed"
+        " FROM checkpoints GROUP BY collection"
+    )
+    for row in rows:
+        failed = f", {row['failed']} not decoded" if row["failed"] else ""
+        print(f"{row['collection']}: {row['n']} checkpoints{failed}")
 
 
 def cmd_sql(store: Store, args: argparse.Namespace) -> None:
@@ -39,31 +47,40 @@ def cmd_sql(store: Store, args: argparse.Namespace) -> None:
     if cur.description is None:
         store.db.commit()
         return
-    names = [d[0] for d in cur.description]
-    print("\t".join(names))
+    print("\t".join(d[0] for d in cur.description))
     for row in cur:
         print("\t".join("" if v is None else str(v) for v in row))
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(prog="gama", description=__doc__)
-    parser.add_argument("--home", type=Path, help=f"data directory (default {DEFAULT_HOME})")
+    parser = argparse.ArgumentParser(prog="gama", description="Decode game RAM dumps kept in an Evi vault")
+    parser.add_argument("--home", type=Path, help="Evi vault directory (default $EVI_HOME)")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    ingest = sub.add_parser("ingest", help="store and decode RAM dumps (files or folders of *.bin)")
-    ingest.add_argument("paths", nargs="+")
-    ingest.add_argument("--name", help="checkpoint name (default: the file name)")
-    ingest.add_argument("--note", help="what was on screen")
-    ingest.set_defaults(func=cmd_ingest)
+    p = sub.add_parser("ingest", help="add RAM dumps (files or folders of *.bin) to the vault and decode them")
+    p.add_argument("paths", nargs="+")
+    p.add_argument("--collection", required=True, help="the Evi collection they belong to")
+    p.add_argument("--source", help="where they came from")
+    p.add_argument("--license", help="what may be done with them")
+    p.add_argument("--note")
+    p.set_defaults(func=cmd_ingest)
 
-    sub.add_parser("rebuild", help="re-decode every stored dump").set_defaults(func=cmd_rebuild)
+    p = sub.add_parser("index", help="decode RAM dumps already in the vault")
+    p.add_argument("--collection", help="only this collection")
+    p.set_defaults(func=cmd_index)
 
-    sql = sub.add_parser("sql", help="run a SQL query against the database")
-    sql.add_argument("query")
-    sql.set_defaults(func=cmd_sql)
+    sub.add_parser("rebuild", help="re-decode every checkpoint").set_defaults(func=cmd_rebuild)
+    sub.add_parser("status", help="checkpoints per collection").set_defaults(func=cmd_status)
+
+    p = sub.add_parser("sql", help="run a SQL query against the decoded tables")
+    p.add_argument("query")
+    p.set_defaults(func=cmd_sql)
 
     args = parser.parse_args(argv)
-    store = Store(args.home or _home())
+    home = args.home or (Path(os.environ["EVI_HOME"]) if "EVI_HOME" in os.environ else None)
+    if home is None:
+        sys.exit("gama: say which vault: set EVI_HOME or pass --home")
+    store = Store(Vault(home))
     try:
         args.func(store, args)
     except Exception as e:  # show a clean message on the command line

@@ -2,6 +2,8 @@
 
 import json
 
+from evi.vault import Provenance, Vault
+
 from gama import decode, layout
 from gama.store import Store
 
@@ -74,15 +76,20 @@ def test_decoders():
     assert (encounter["guard1_left"], encounter["guard1_start"]) == (0, 8)
 
 
-def test_store_ingests_once_and_rebuilds(tmp_path):
+def test_store_decodes_dumps_from_the_vault(tmp_path):
     dump_path = tmp_path / "cp.bin"
     dump_path.write_bytes(bytes(synthetic_dump()))
-    store = Store(tmp_path / "home")
+    store = Store(Vault(tmp_path / "vault"))
+    prov = Provenance("test", source="synthetic")
 
-    first_id, new = store.ingest(dump_path, note="synthetic")
-    assert new
-    again_id, new = store.ingest(dump_path)
-    assert (again_id, new) == (first_id, False)
+    first = store.ingest([dump_path], prov)
+    assert [new for _, _, new in first] == [True]
+    again = store.ingest([dump_path], prov)
+    assert [new for _, _, new in again] == [False]
+    assert store.db.execute("SELECT count(*) FROM checkpoints").fetchone()[0] == 1
+
+    item = store.vault.catalog.db.execute("SELECT kind, storage FROM items").fetchone()
+    assert (item["kind"], item["storage"]) == ("ramdump", "paged")
 
     assert store.rebuild() == 1
     gold = store.db.execute("SELECT gold FROM wizards WHERE idx = 0").fetchone()[0]
