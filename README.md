@@ -1,5 +1,12 @@
 # gama: game analytics
 
+Part of **ApocryphaCipher**: delving into the apocryphal to reconstruct
+long-lost, undocumented code (inspired by the Apocrypha, the realm of
+lost and forbidden knowledge in The Elder Scrolls Online). Its tools
+support forensic investigation of software, namely 90s DOS games. The
+other tools so far are a DOSBox Staging fork that exposes the running
+machine (memory, screenshots) and Mirror, a Master of Magic save viewer.
+
 Turns RAM dumps of Master of Magic, running in the DOSBox Staging fork
 (`~/repo/c++/dosbox-staging`, branch `webserver-write-guard`), into a
 SQLite dataset you can query.
