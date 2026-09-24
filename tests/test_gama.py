@@ -157,3 +157,28 @@ def test_hovered_tile_uses_the_view_origin_and_wraps():
     assert hovered_tile([10, 30], (58, 0)) == (58, 0)
     assert hovered_tile([2 * 45, 30], (58, 0)) == (0, 0)     # wraps at x = 60
     assert hovered_tile([500, 100], (32, 16)) is None       # the side panel
+
+
+def test_city_resources_for_a_site_and_a_city():
+    from gama import resources
+
+    dump = synthetic_dump()
+    city = layout.CITIES.base
+    put(dump, city + 31, bytes([0xFF] * 36))  # nothing built...
+    put(dump, city + 31 + 29, bytes([1]))  # ...but a granary
+    put(dump, layout.TERRAIN, (0xA3).to_bytes(2, "little") * 2400)  # Arcanus all forest
+    put(dump, layout.EXPLORED, bytes([1]) * 2400)
+    put(dump, layout.MINERALS + 19 * 60 + 10, bytes([resources.WILD_GAME]))  # beside Testburg
+    put(dump, layout.MINERALS + 20 * 60 + 31, bytes([resources.WILD_GAME]))  # beside the site
+
+    # Testburg (10, 20): 21 forests = 10½ food -> 10, wild game +2, granary +2.
+    got = resources.city_resources(bytes(dump), 10, 20, 0)
+    assert (got.max_pop, got.production, got.gold) == (14, 63, 0)
+
+    # An empty site counts wild game as a quarter food: (21 * 2 + 1) // 4.
+    got = resources.city_resources(bytes(dump), 30, 20, 0)
+    assert (got.max_pop, got.production, got.gold) == (10, 63, 0)
+
+    # Beside the ocean (Myrror is all zeros, i.e. ocean): +10% gold.
+    put(dump, layout.TERRAIN + 2 * (2400 + 20 * 60 + 30), (0xA3).to_bytes(2, "little"))
+    assert resources.city_resources(bytes(dump), 30, 20, 1).gold == 10

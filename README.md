@@ -49,6 +49,18 @@ from (blocks written in several calls are joined), which places every
 save block in memory without guessing. The log is evidence too:
 `evi add files.jsonl --collection ...`.
 
+**The Surveyor's City Resources.** `gama resources DUMP X Y [PLANE]`
+computes what the game's Surveyor shows for a tile (Maximum Pop, Prod
+Bonus, Gold Bonus) from a raw dump's terrain, specials, explored map and
+cities:
+
+```bash
+uv run gama resources cp39_surveyor_sidon.bin 55 29
+```
+
+It matched all six readouts recorded on screen; Mirror's
+`docs/reference/surveyor-formula.md` has the rules and their evidence.
+
 **Signatures: let DOSBox notice the moments.** `signatures/mom/` holds
 signatures for the DOSBox fork (JSON, one or many per file): *watches* on
 known fields and tables (every city's population and size, buildings,

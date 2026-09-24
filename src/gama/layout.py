@@ -32,6 +32,13 @@ UNIT_TYPES = Table(base=DGROUP + 0x19C, stride=0x24, count=256)
 
 UNIT_COUNT = 0x34782  # u16
 
+# Map planes: 2 planes (0 Arcanus, 1 Myrror) x 40 rows x 60 columns.
+MAP_WIDTH, MAP_HEIGHT = 60, 40
+MAP_SIZE = MAP_WIDTH * MAP_HEIGHT
+TERRAIN = 0x72630  # u16 per tile
+MINERALS = 0x760B0  # u8 per tile: specials such as 64 = wild game
+EXPLORED = 0x78690  # u8 per tile: 0 = unexplored
+
 
 def u16(data: bytes, offset: int) -> int:
     return int.from_bytes(data[offset : offset + 2], "little")
