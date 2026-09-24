@@ -21,7 +21,8 @@ PRODUCTION_BUILDINGS = {SAWMILL: 25, FORESTERS_GUILD: 25, MINERS_GUILD: 50, MECH
 GOLD_BUILDINGS = {MERCHANTS_GUILD: 100, BANK: 50, MARKETPLACE: 50}
 
 # City enchantment slots (the 26 bytes at +0x43).
-INSPIRATIONS, PROSPERITY = 0x12, 0x13
+FAMINE, GAIAS_BLESSING, INSPIRATIONS, PROSPERITY = 0x07, 0x11, 0x12, 0x13
+CORRUPTED = 0x20  # terrain flag
 NOMAD = 11
 
 # Single tiles 0xA2..0xB8: (half-food, production %).
@@ -117,6 +118,9 @@ class Map:
     def explored(self, x: int, y: int, plane: int) -> bool:
         return self.dump[layout.EXPLORED + self._index(x, y, plane)] != 0
 
+    def corrupted(self, x: int, y: int, plane: int) -> bool:
+        return self.dump[layout.TERRAIN_FLAGS + self._index(x, y, plane)] & CORRUPTED != 0
+
     def cities(self):
         for i in range(layout.CITIES.count):
             record = layout.CITIES.record(self.dump, i)
@@ -126,6 +130,24 @@ class Map:
 
 def _built(city: bytes, building: int) -> bool:
     return city[31 + building] in (0, 1)  # 1 built, 0 replaced by a better one
+
+
+def city_max_pop(world: Map, city: bytes, shared: set) -> int:
+    """A city's maximum population: its uncorrupted tiles' food (explored or
+    not), x1.5 with Gaia's Blessing, halved by Famine, plus buildings and
+    wild game (2 food, 1 on a tile another city also works)."""
+    x, y, plane = city[15:18]
+    tiles = [t for t in catchment(x, y) if not world.corrupted(*t, plane)]
+    half_food = sum(tile_food_and_production(world.terrain(*t, plane))[0] for t in tiles)
+    enchantments = city[0x43 : 0x43 + 26]
+    if enchantments[GAIAS_BLESSING]:
+        half_food = half_food * 3 // 2
+    max_pop = half_food // 2
+    if enchantments[FAMINE]:
+        max_pop //= 2
+    max_pop += 2 * _built(city, GRANARY) + 3 * _built(city, FARMERS_MARKET)
+    max_pop += sum(1 if t in shared else 2 for t in tiles if world.mineral(*t, plane) & WILD_GAME)
+    return max_pop
 
 
 def road_trade_bonus(dump: bytes, index: int) -> int:
@@ -180,8 +202,7 @@ def city_resources(dump: bytes, x: int, y: int, plane: int) -> CityResources:
         # per tile here, not the 2 food a city gets from it.
         max_pop = int(2 * food + wild_game) // 4
     else:
-        max_pop = int(food) // 2 + 2 * int(wild_game)
-        max_pop += 2 * _built(city, GRANARY) + 3 * _built(city, FARMERS_MARKET)
+        max_pop = city_max_pop(world, city, claimed)
         production += sum(v for b, v in PRODUCTION_BUILDINGS.items() if _built(city, b))
         enchantments = city[0x43 : 0x43 + 26]
         production += 100 if enchantments[INSPIRATIONS] else 0

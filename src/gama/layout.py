@@ -38,6 +38,28 @@ MAP_SIZE = MAP_WIDTH * MAP_HEIGHT
 TERRAIN = 0x72630  # u16 per tile
 MINERALS = 0x760B0  # u8 per tile: specials such as 64 = wild game
 EXPLORED = 0x78690  # u8 per tile: 0 = unexplored
+TERRAIN_FLAGS = 0x773A0  # u8 per tile: 0x20 = corrupted
+
+# Where save-file (SAVEn.GAM) blocks live in RAM, from the game's own
+# writes (Mirror docs/reference/save-to-ram-map.md): (file offset, bytes, RAM).
+SAVE_SIZE = 123300
+SAVE_BLOCKS = [
+    (0x09E8, 7344, WIZARDS.base),
+    (0x2698, 9600, TERRAIN),
+    (0x8AAC, 11400, CITIES.base),
+    (0x13554, 4800, MINERALS),
+    (0x14814, 4800, EXPLORED),
+    (0x1CBB8, 4800, TERRAIN_FLAGS),
+]
+
+
+def ram_from_save(save: bytes) -> bytes:
+    """Place a save file's map, city and wizard blocks where the game keeps
+    them in RAM, so the same readers work on saves and dumps."""
+    ram = bytearray(max(address + length for _, length, address in SAVE_BLOCKS))
+    for offset, length, address in SAVE_BLOCKS:
+        ram[address : address + length] = save[offset : offset + length]
+    return bytes(ram)
 
 
 def u16(data: bytes, offset: int) -> int:

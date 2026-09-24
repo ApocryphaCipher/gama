@@ -8,7 +8,7 @@ from pathlib import Path
 
 from evi.vault import Provenance, Vault
 
-from gama import filemap, resources
+from gama import filemap, layout, resources
 from gama.dosbox import DEFAULT_URL, DosboxApi
 from gama.store import Store
 
@@ -91,7 +91,10 @@ def cmd_surveyor(_store: Store | None, args: argparse.Namespace) -> None:
 
 
 def cmd_resources(_store: Store | None, args: argparse.Namespace) -> None:
-    result = resources.city_resources(Path(args.dump).read_bytes(), args.x, args.y, args.plane)
+    data = Path(args.dump).read_bytes()
+    if len(data) == layout.SAVE_SIZE:
+        data = layout.ram_from_save(data)
+    result = resources.city_resources(data, args.x, args.y, args.plane)
     print(f"Maximum Pop {result.max_pop}, Prod Bonus +{result.production}%, Gold Bonus +{result.gold}%")
     print("  " + ", ".join(f"{k} {v}" for k, v in result.notes.items()))
 
@@ -157,8 +160,8 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--plane", type=int, help="plane (0 Arcanus, 1 Myrror) until a map-plane hit says otherwise")
     p.set_defaults(func=cmd_surveyor, needs_vault=False)
 
-    p = sub.add_parser("resources", help="the Surveyor's City Resources for a tile, from a RAM dump file")
-    p.add_argument("dump", help="a raw RAM dump (.bin)")
+    p = sub.add_parser("resources", help="the Surveyor's City Resources for a tile, from a RAM dump or save file")
+    p.add_argument("dump", help="a raw RAM dump (.bin) or a save file (SAVEn.GAM)")
     p.add_argument("x", type=int)
     p.add_argument("y", type=int)
     p.add_argument("plane", type=int, nargs="?", default=0, help="0 Arcanus (default), 1 Myrror")
