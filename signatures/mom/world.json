@@ -1,0 +1,15 @@
+[
+  {"name": "unit-count", "kind": "watch", "address": "0x34782", "size": 2, "window": 16,
+   "note": "units in play: goes up when a unit is built or summoned, down when dead slots are cleared"},
+  {"name": "node-owner", "kind": "watch",
+   "address": "0x85FE3", "size": 1, "stride": 48, "count": 30, "window": 48,
+   "actions": ["screenshot"],
+   "note": "node record +3: a node melded or lost (node table at 0x85FE0, 48 bytes each)"},
+  {"name": "lair-intact", "kind": "watch",
+   "address": "0x86663", "size": 1, "stride": 24, "count": 102, "window": 24,
+   "actions": ["screenshot"],
+   "note": "encounter record +3: a lair, temple or node guard cleared (table at 0x86660)"},
+  {"name": "minerals", "kind": "watch",
+   "address": "0x760B0", "size": 60, "stride": 60, "count": 80, "window": 60,
+   "note": "one row of the minerals map (60 tiles) per index; index 0-39 Arcanus y, 40-79 Myrror y"}
+]

@@ -1,0 +1,11 @@
+[
+  {"name": "combat-skill", "kind": "watch", "address": "0x32906", "size": 2, "window": 16,
+   "actions": ["screenshot"],
+   "note": "Freya's wizard +0x4C: non-zero only during a battle, so 0 -> n marks a battle starting"},
+  {"name": "research-spell", "kind": "watch", "address": "0x32B1C", "size": 2, "window": 16,
+   "note": "Freya's wizard +0x262: a new spell chosen for research"},
+  {"name": "fame", "kind": "watch", "address": "0x328DE", "size": 2, "window": 16,
+   "note": "Freya's wizard +0x24"},
+  {"name": "summoning-circle", "kind": "watch", "address": "0x328E8", "size": 6, "window": 16,
+   "note": "Freya's wizard +0x2E..+0x33: x, y, plane"}
+]

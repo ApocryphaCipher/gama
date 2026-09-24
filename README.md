@@ -49,6 +49,19 @@ from (blocks written in several calls are joined), which places every
 save block in memory without guessing. The log is evidence too:
 `evi add files.jsonl --collection ...`.
 
+**Signatures: let DOSBox notice the moments.** `signatures/mom/` holds
+signatures for the DOSBox fork (JSON, one or many per file): *watches* on
+known fields and tables (every city's population and size, buildings,
+city enchantments, node owners, cleared lairs, unit count, minerals,
+Freya's fame, research, summoning circle and combat skill) and
+*patterns* for bytes or text that appear. Start DOSBox with
+`--set webserver_signature_dir=$HOME/repo/python/gama/signatures/mom`; each
+hit is appended to `hits.jsonl` there (git-ignored) with a window of the
+memory around it, and a hit can take a screenshot or pause the game so a
+`gama checkpoint` catches the moment (then `POST /api/v1/dosbox/resume`).
+The addresses are `WIZARDS.EXE`'s, stable across launches with the same
+DOSBox memory size.
+
 **`gama checkpoint`** is the one call to make at every moment worth
 keeping: it asks the running DOSBox (the fork's API, default
 `http://127.0.0.1:8086`) for all 16 MB of memory, a raw screenshot and

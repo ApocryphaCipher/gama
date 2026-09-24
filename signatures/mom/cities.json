@@ -1,0 +1,19 @@
+[
+  {"name": "city-population-thousands", "kind": "watch",
+   "address": "0x6F994", "size": 1, "stride": 114, "count": 100, "window": 114,
+   "note": "city record +0x14; the city table is at 0x6F980, 114 bytes per city"},
+  {"name": "city-population-tens", "kind": "watch",
+   "address": "0x6F998", "size": 2, "stride": 114, "count": 100, "window": 114,
+   "note": "city record +0x18: shown population = thousands x 1000 + tens x 10"},
+  {"name": "city-size", "kind": "watch",
+   "address": "0x6F993", "size": 1, "stride": 114, "count": 100, "window": 114,
+   "actions": ["screenshot"],
+   "note": "city record +0x13: 0 Outpost, 1 Hamlet, 2 Village ...; when does it change?"},
+  {"name": "city-building-count", "kind": "watch",
+   "address": "0x6F99E", "size": 1, "stride": 114, "count": 100, "window": 114,
+   "note": "city record +0x1E: a building finished (or was sold or destroyed)"},
+  {"name": "city-enchantments", "kind": "watch",
+   "address": "0x6F9C3", "size": 26, "stride": 114, "count": 100, "window": 64,
+   "actions": ["screenshot"],
+   "note": "city record +0x43: the 26 city enchantment slots"}
+]
