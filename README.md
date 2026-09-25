@@ -73,7 +73,7 @@ memory around it, and a hit can take a screenshot or pause the game so a
 `gama checkpoint` catches the moment (then `POST /api/v1/dosbox/resume`).
 `surveyor.json` watches the game's UI text slots, so with the Surveyor
 open, each hovered tile logs its panel text with the mouse position;
-`uv run gama surveyor hits.jsonl` lists them.
+`uv run gama surveyor hits.jsonl` lists them; add `--check SAVE9.GAM` (or a dump) to mark each hover's food and production text as agreeing or conflicting with gama's tile rules.
 The addresses are `WIZARDS.EXE`'s, stable across launches with the same
 DOSBox memory size. **During a battle the game reuses the memory of the
 city table (and others) for combat**, and a save loading rewrites them

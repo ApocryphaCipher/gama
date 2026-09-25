@@ -134,15 +134,18 @@ def _built(city: bytes, building: int) -> bool:
 
 def city_max_pop(world: Map, city: bytes, shared: set) -> int:
     """A city's maximum population: its uncorrupted tiles' food (explored or
-    not), x1.5 with Gaia's Blessing, halved by Famine, plus buildings and
-    wild game (2 food, 1 on a tile another city also works)."""
+    not; a tile another city also works gives half, rounded only after
+    summing), x1.5 with Gaia's Blessing, halved by Famine, plus buildings
+    and wild game (2 food, 1 on a shared tile)."""
     x, y, plane = city[15:18]
     tiles = [t for t in catchment(x, y) if not world.corrupted(*t, plane)]
-    half_food = sum(tile_food_and_production(world.terrain(*t, plane))[0] for t in tiles)
+    half_food = sum(
+        tile_food_and_production(world.terrain(*t, plane))[0] / (2 if t in shared else 1) for t in tiles
+    )
     enchantments = city[0x43 : 0x43 + 26]
     if enchantments[GAIAS_BLESSING]:
-        half_food = half_food * 3 // 2
-    max_pop = half_food // 2
+        half_food = half_food * 3 / 2
+    max_pop = int(half_food) // 2
     if enchantments[FAMINE]:
         max_pop //= 2
     max_pop += 2 * _built(city, GRANARY) + 3 * _built(city, FARMERS_MARKET)

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from evi.vault import Provenance, Vault
 
-from gama import filemap, layout, resources
+from gama import filemap, layout, resources, surveyor
 from gama.dosbox import DEFAULT_URL, DosboxApi
 from gama.store import Store
 
@@ -47,49 +47,26 @@ def cmd_filemap(_store: Store | None, args: argparse.Namespace) -> None:
 
 # The overland map view: 12 x 10 tiles of 20 x 18 pixels from screen (0, 20);
 # INT 33h reports x in 0..639 in MoM's 320-pixel mode. The world wraps at x = 60.
-MAP_TILE_W, MAP_TILE_H, MAP_TOP, MAP_COLS, MAP_ROWS, WORLD_W = 20, 18, 20, 12, 10, 60
-
-
-def hovered_tile(mouse, origin):
-    if not mouse or not origin:
-        return None
-    px, py = mouse[0] // 2, mouse[1]
-    col, row = px // MAP_TILE_W, (py - MAP_TOP) // MAP_TILE_H
-    if py < MAP_TOP or not (0 <= col < MAP_COLS and 0 <= row < MAP_ROWS):
-        return None
-    return ((origin[0] + col) % WORLD_W, origin[1] + row)
-
-
 def cmd_surveyor(_store: Store | None, args: argparse.Namespace) -> None:
-    import json
-    import re
-
     origin = tuple(int(v) for v in args.origin.split(",")) if args.origin else None
-    plane = args.plane
-    print("time\tmouse\ttile\tplane\ttext")
-    for line in Path(args.hits).read_text().splitlines():
-        hit = json.loads(line)
-        if hit.get("bulk"):
-            continue
-        if hit["signature"] == "map-view":
-            raw = bytes.fromhex(hit["new"].replace(" ", ""))
-            origin = (int.from_bytes(raw[0:2], "little"), int.from_bytes(raw[2:4], "little"))
-            if origin == (0xFFFF, 0xFFFF):
-                origin = None  # the game clears it while off the map (city screen etc.)
-            continue
-        if hit["signature"] == "map-plane":
-            plane = hit["new_value"]
-            continue
-        if not hit["signature"].startswith("surveyor-text"):
-            continue
-        new = bytes.fromhex(hit["new"].replace(" ", ""))
-        old = bytes.fromhex(hit["old"].replace(" ", ""))
-        # Keep only the strings that changed: the slots the game just wrote.
-        texts = [m.group().decode() for m in re.finditer(rb"[ -~]{3,}", new)
-                 if new[m.start():m.end()] != old[m.start():m.end()]]
-        if texts:
-            tile = hovered_tile(hit.get("mouse"), origin)
-            print(f"{hit['t'][11:19]}\t{hit.get('mouse')}\t{tile or ''}\t{'' if plane is None else plane}\t{' | '.join(texts)}")
+    world = None
+    if args.check:
+        data = Path(args.check).read_bytes()
+        world = resources.Map(layout.ram_from_save(data) if len(data) == layout.SAVE_SIZE else data)
+    counts = {}
+    print("time\tmouse\ttile\tplane\t" + ("check\t" if world else "") + "text")
+    for hover in surveyor.hovers(Path(args.hits), origin, args.plane):
+        verdict = ""
+        if world and hover.tile and hover.plane is not None:
+            verdict = surveyor.check(world, hover)
+            counts[verdict] = counts.get(verdict, 0) + 1
+            verdict += "\t"
+        elif world:
+            verdict = "\t"
+        plane = "" if hover.plane is None else hover.plane
+        print(f"{hover.time[11:19]}\t{list(hover.mouse or [])}\t{hover.tile or ''}\t{plane}\t{verdict}{' | '.join(hover.texts)}")
+    if world:
+        print("# " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())), file=sys.stderr)
 
 
 def cmd_resources(_store: Store | None, args: argparse.Namespace) -> None:
@@ -160,6 +137,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("hits", help="hits.jsonl written by the DOSBox fork")
     p.add_argument("--origin", help="map view top-left tile 'x,y' until a map-view hit says otherwise")
     p.add_argument("--plane", type=int, help="plane (0 Arcanus, 1 Myrror) until a map-plane hit says otherwise")
+    p.add_argument("--check", metavar="DUMP", help="check each hover's food and production text against this dump or save")
     p.set_defaults(func=cmd_surveyor, needs_vault=False)
 
     p = sub.add_parser("resources", help="the Surveyor's City Resources for a tile, from a RAM dump or save file")

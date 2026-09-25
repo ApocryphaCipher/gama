@@ -149,7 +149,7 @@ def test_filemap_merges_a_block_written_in_pieces(tmp_path):
 
 
 def test_hovered_tile_uses_the_view_origin_and_wraps():
-    from gama.cli import hovered_tile
+    from gama.surveyor import hovered_tile
 
     assert hovered_tile([260, 110], (32, 16)) == (38, 21)   # Konstanz
     assert hovered_tile([298, 105], (32, 16)) == (39, 20)   # a gold vein
@@ -196,6 +196,23 @@ def test_shared_tiles_give_half_production_rounded_down_per_tile():
     put(dump, layout.TERRAIN, (0xA3).to_bytes(2, "little") * 2400)  # all forest, 3% each
     put(dump, layout.EXPLORED, bytes([1]) * 2400)
 
-    # 6 of Testburg's 21 tiles are also Nearby's: they give 3 // 2 = 1 each.
+    # 6 of Testburg's 21 tiles are also Nearby's: they give 3 // 2 = 1%
+    # production each, and half food, rounded after summing: 15 + 6 / 2 = 18.
     got = resources.city_resources(bytes(dump), 10, 20, 0)
-    assert (got.max_pop, got.production) == (10, 15 * 3 + 6 * 1)
+    assert (got.max_pop, got.production) == (18 // 2, 15 * 3 + 6 * 1)
+
+
+def test_surveyor_panel_text_and_the_swamp_quirk():
+    from gama import resources, surveyor
+
+    assert [surveyor.food_text(n) for n in range(6)] == [
+        None, "1/2 food", "1 food", "1   1/2 food", "2 food", "2   1/2 food"]
+
+    dump = bytearray(layout.EXPLORED)
+    put(dump, layout.TERRAIN, (0xA6).to_bytes(2, "little"))  # a swamp at (0, 0) on Arcanus
+    world = resources.Map(bytes(dump))
+    hover = lambda *texts: surveyor.Hover("", None, (0, 0), 0, list(texts))  # noqa: E731
+    assert resources.tile_food_and_production(0xA6) == (0, 0)  # cities count swamp as nothing...
+    assert surveyor.check(world, hover("Swamp", "1/2 food")) == "agree"  # ...the panel says 1/2
+    assert surveyor.check(world, hover("+3% production")) == "conflict"
+    assert surveyor.check(world, hover("Cities cannot be built")) == "silent"
