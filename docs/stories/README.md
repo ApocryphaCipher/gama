@@ -1,0 +1,8 @@
+- [STORY-001](STORY-001-create-the-contract-repo.md): create the shared contract repo (`.proto` files) with Buf lint and breaking-change checks (EPIC-001) Not started
+- [STORY-002](STORY-002-surveyor-reads-protobuf-hits.md): `gama surveyor` reads protobuf hits as well as `hits.jsonl` (EPIC-001) Not started
+- [STORY-003](STORY-003-filemap-reads-protobuf-file-calls.md): `gama filemap` reads the protobuf file-call log (EPIC-001) Not started
+- [STORY-004](STORY-004-viewport-client-and-store.md): a viewport client that polls the fork and stores frames (EPIC-001) Not started
+- [STORY-005](STORY-005-export-derived-tables-as-protobuf.md): `gama export` writes the derived tables as protobuf (EPIC-001) Not started
+- [STORY-006](STORY-006-stream-over-grpc.md): stream checkpoints and hits over gRPC (EPIC-001, stretch) Not started
+- [STORY-007](STORY-007-measure-json-against-protobuf.md): **measurement**: JSON against protobuf for size and read time, on real logs (EPIC-001) Not started
+- [STORY-008](STORY-008-mirror-reads-the-export.md): Mirror reads gama's export; lives in Mirror and needs a dependency approved (EPIC-001) Not started

@@ -35,6 +35,7 @@ uv run gama ingest dumps/ --collection mom-live-2026-09-23 \
 uv run gama index                           # decode dumps already in the vault
 uv run gama sql "SELECT c.name, ci.population FROM cities ci JOIN checkpoints c ON c.id = ci.checkpoint_id WHERE ci.name = 'Hamburg' ORDER BY c.taken_at"
 uv run gama rebuild
+uv run gama status                          # checkpoints per collection, and how many weren't decoded
 ```
 
 **Mapping a save file onto memory.** Start DOSBox with
@@ -121,6 +122,9 @@ decoded, with the reason in `checkpoints.layout_error`.
 ```bash
 uv run pytest
 ```
+
+Reference pages (every table column, the RAM layout, what `checkpoint`
+files), plans and handoff notes are in [docs/](docs/README.md).
 
 ## Licence
 
