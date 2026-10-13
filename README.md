@@ -8,7 +8,7 @@ other tools so far are a DOSBox Staging fork that exposes the running
 machine (memory, screenshots) and Mirror, a Master of Magic save viewer.
 
 Turns RAM dumps of Master of Magic, running in the DOSBox Staging fork
-(`ApocryphaCipher/dosbox-staging`, branch `webserver-write-guard`), into
+(`ApocryphaCipher/dosbox-staging`, branch `apocrypha/research`), into
 SQLite tables you can query. It is the decoding and data layer between
 the fork, which captures the running machine, and
 [Evi](https://github.com/ApocryphaCipher/evi), which keeps the evidence.
@@ -35,6 +35,7 @@ uv run gama ingest dumps/ --collection mom-live-2026-09-23 \
 uv run gama index                           # decode dumps already in the vault
 uv run gama sql "SELECT c.name, ci.population FROM cities ci JOIN checkpoints c ON c.id = ci.checkpoint_id WHERE ci.name = 'Hamburg' ORDER BY c.taken_at"
 uv run gama rebuild
+uv run gama status                          # checkpoints per collection, and how many weren't decoded
 ```
 
 **Mapping a save file onto memory.** Start DOSBox with
@@ -121,6 +122,9 @@ decoded, with the reason in `checkpoints.layout_error`.
 ```bash
 uv run pytest
 ```
+
+Reference pages (every table column, the RAM layout, what `checkpoint`
+files), plans and handoff notes are in [docs/](docs/README.md).
 
 ## Licence
 
