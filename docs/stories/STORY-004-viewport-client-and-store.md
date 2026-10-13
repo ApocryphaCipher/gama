@@ -2,7 +2,7 @@
 
 **Parent:** [EPIC-001](../epics/EPIC-001-protobuf-pipeline.md)
 **Status:** Not started. Needs the fork's
-[STORY-004](https://github.com/ApocryphaCipher/dosbox-staging/blob/webserver-write-guard/docs/apocrypha/stories/STORY-004-viewport-sampler-and-ring-buffer.md).
+[STORY-004](https://github.com/ApocryphaCipher/dosbox-staging/blob/apocrypha/research/docs/apocrypha/stories/STORY-004-viewport-sampler-and-ring-buffer.md).
 **Size:** medium
 
 ## The idea

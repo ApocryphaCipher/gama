@@ -5,7 +5,7 @@ For what gama is and how to run it, see the [README](../README.md).
 
 Working docs for gama (game analytics, part of **ApocryphaCipher**): the
 decoding and data layer between the
-[DOSBox fork](https://github.com/ApocryphaCipher/dosbox-staging/tree/webserver-write-guard),
+[DOSBox fork](https://github.com/ApocryphaCipher/dosbox-staging/tree/apocrypha/research),
 which captures the running machine, and [Evi](https://github.com/ApocryphaCipher/evi),
 which keeps the evidence. Not shipped; this is planning and reference scaffolding.
 

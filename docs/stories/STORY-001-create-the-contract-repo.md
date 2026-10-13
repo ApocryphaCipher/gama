@@ -34,7 +34,7 @@ Only what a later story needs, nothing speculative:
 
 - `apocrypha/v1/common.proto`: `Mouse`, a timestamp use, an `Anchor` enum.
 - `apocrypha/v1/hit.proto`: `SignatureHit` (see the fork's
-  [STORY-002](https://github.com/ApocryphaCipher/dosbox-staging/blob/webserver-write-guard/docs/apocrypha/stories/STORY-002-signature-hits-as-protobuf.md)).
+  [STORY-002](https://github.com/ApocryphaCipher/dosbox-staging/blob/apocrypha/research/docs/apocrypha/stories/STORY-002-signature-hits-as-protobuf.md)).
 - `apocrypha/v1/filecall.proto`: `FileCall` (the fork's STORY-003).
 - `apocrypha/v1/viewport.proto`: `Viewport` (the fork's STORY-004).
 

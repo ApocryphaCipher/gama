@@ -2,7 +2,7 @@
 
 **Parent:** [EPIC-001](../epics/EPIC-001-protobuf-pipeline.md)
 **Status:** Not started. Needs [STORY-001](STORY-001-create-the-contract-repo.md) and the fork's
-[STORY-003](https://github.com/ApocryphaCipher/dosbox-staging/blob/webserver-write-guard/docs/apocrypha/stories/STORY-003-file-calls-as-protobuf.md).
+[STORY-003](https://github.com/ApocryphaCipher/dosbox-staging/blob/apocrypha/research/docs/apocrypha/stories/STORY-003-file-calls-as-protobuf.md).
 **Size:** small
 
 ## The idea

@@ -3,7 +3,7 @@
 **Status:** Proposed (2026-10-08). Not started.
 **Requested by:** [Kevin](https://github.com/KevinAsbury), 2026-10-08, "for funsies":
 a play project turning the Apocrypha tools into protobuf versions.
-**Sibling epics:** [fork EPIC-001](https://github.com/ApocryphaCipher/dosbox-staging/blob/webserver-write-guard/docs/apocrypha/epics/EPIC-001-protobuf-output.md),
+**Sibling epics:** [fork EPIC-001](https://github.com/ApocryphaCipher/dosbox-staging/blob/apocrypha/research/docs/apocrypha/epics/EPIC-001-protobuf-output.md),
 [Evi EPIC-001](https://github.com/ApocryphaCipher/evi/blob/main/docs/epics/EPIC-001-protobuf-export.md)
 
 ## Goal

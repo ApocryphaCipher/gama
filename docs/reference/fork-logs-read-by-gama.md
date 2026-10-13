@@ -3,7 +3,7 @@
 gama is the consumer of the DOSBox fork's outputs. This page lists the parts
 of each format gama actually depends on, so a change to the fork's format knows
 what it would break. The formats themselves are described in the fork's docs:
-[`docs/apocrypha/reference/`](https://github.com/ApocryphaCipher/dosbox-staging/tree/webserver-write-guard/docs/apocrypha/reference).
+[`docs/apocrypha/reference/`](https://github.com/ApocryphaCipher/dosbox-staging/tree/apocrypha/research/docs/apocrypha/reference).
 
 Client code is in [`dosbox.py`](../../src/gama/dosbox.py),
 [`surveyor.py`](../../src/gama/surveyor.py) and
@@ -20,7 +20,7 @@ Client code is in [`dosbox.py`](../../src/gama/dosbox.py),
 
 The timeout is 30 s. A 16 MB read goes through the fork's bridge, which waits
 up to 250 ms for the emulation thread to run the command; see the fork's
-[http-api.md](https://github.com/ApocryphaCipher/dosbox-staging/blob/webserver-write-guard/docs/apocrypha/reference/http-api.md#how-a-request-runs).
+[http-api.md](https://github.com/ApocryphaCipher/dosbox-staging/blob/apocrypha/research/docs/apocrypha/reference/http-api.md#how-a-request-runs).
 
 ## `hits.jsonl` (`gama surveyor`)
 

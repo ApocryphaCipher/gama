@@ -8,7 +8,7 @@ other tools so far are a DOSBox Staging fork that exposes the running
 machine (memory, screenshots) and Mirror, a Master of Magic save viewer.
 
 Turns RAM dumps of Master of Magic, running in the DOSBox Staging fork
-(`ApocryphaCipher/dosbox-staging`, branch `webserver-write-guard`), into
+(`ApocryphaCipher/dosbox-staging`, branch `apocrypha/research`), into
 SQLite tables you can query. It is the decoding and data layer between
 the fork, which captures the running machine, and
 [Evi](https://github.com/ApocryphaCipher/evi), which keeps the evidence.
